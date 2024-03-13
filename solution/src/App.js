@@ -15,10 +15,27 @@ function App() {
   const [countriesData, setCountriesData] = useState([]);
   const [tableData, setTableData] = useState([]);
 
+  // We need to debounce to avoid unnecessary API calls
+  const debouncedValidation = useCallback(
+      debounce((name) => {
+          isNameValid(name).then(data => {
+              if (!data) {
+                  setNameValidationError('This name is taken')
+              } else {
+                  setNameValidationError(null);
+              }
+          });
+        }, 350),
+        []
+    );
   useEffect(() => {
       getLocations().then(data => setCountriesData(data)).catch((e) => setFetchingError(e.getMessage()));
   }, []);
-
+  useEffect(() => {
+      if (name) {
+          debouncedValidation(name);
+      }
+  }, [name, debouncedValidation]);
   const handleSelectCountryChange = (e) => setSelectedCountry(e.target.value);
   const handleNameChange = (e) => setName(e.target.value);
   const addTableRecord = () => {
@@ -32,34 +49,8 @@ function App() {
       setTableData([])
   }
 
-
-
-    const debouncedValidation = useCallback(
-        debounce((name) => {
-            isNameValid(name).then(data => {
-                if (!data) {
-                    setNameValidationError('This name is taken')
-                } else {
-                    setNameValidationError(null);
-                }
-            });
-        }, 300),
-        []
-    );
-
-
-
-    useEffect(() => {
-        if (name) {
-            debouncedValidation(name);
-        }
-    }, [name, debouncedValidation]);
-
-
-
   return (
     <div className="App">
-
         <InputField label='name' value={name} onChange={handleNameChange} />
         { nameValidationError && <p className="error">{nameValidationError}</p> }
         <MultiselectInputField options={countriesData} label='countries' value={selectedCountry} onChange={handleSelectCountryChange} />
